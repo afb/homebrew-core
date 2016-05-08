@@ -163,7 +163,6 @@
   "libqxt": "homebrew/boneyard",
   "librets": "homebrew/boneyard",
   "libspotify": "homebrew/binary",
-  "libtomcrypt": "homebrew/boneyard",
   "libtorrent": "homebrew/boneyard",
   "lilypond": "homebrew/tex",
   "luyten": "homebrew/gui",
