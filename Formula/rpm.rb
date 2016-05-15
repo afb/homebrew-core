@@ -18,6 +18,7 @@ class Rpm < Formula
       :using => RpmDownloadStrategy
   version "5.4.15"
   sha256 "d4ae5e9ed5df8ab9931b660f491418d20ab5c4d72eb17ed9055b80b71ef6c4ee"
+  revision 1
 
   bottle do
     sha256 "29c05e064c80738733182e6688a82cef3a2c933b40acbeb43d3a842693ca91f4" => :el_capitan
@@ -27,7 +28,7 @@ class Rpm < Formula
   end
 
   depends_on "rpm2cpio" => :build
-  depends_on "berkeley-db"
+  depends_on "berkeley-db5"
   depends_on "libmagic"
   depends_on "popt"
   depends_on "libtasn1"
@@ -63,6 +64,10 @@ class Rpm < Formula
       varprefix=#{var}
     ]
 
+    # use db5, until db6 is stable (in BDB 6.2 ?)
+    inreplace "configure", "DBXY=db61", "DBXY=db"
+    inreplace "configure", "db-6.1", "db-5.3"
+    inreplace "configure", "db_sql-6.1", "db_sql-5.3"
     system "./configure", *args
     inreplace "Makefile", "--tag=CC", "--tag=CXX"
     inreplace "Makefile", "--mode=link $(CCLD)", "--mode=link $(CXX)"
@@ -122,5 +127,10 @@ class Rpm < Formula
     assert File.exist?(rpmdir("%_rpmdir")/"noarch/test-1.0-1.noarch.rpm")
     system "#{bin}/rpm", "-qpi", "--dbpath=#{testpath}/var/lib/rpm",
                          rpmdir("%_rpmdir")/"noarch/test-1.0-1.noarch.rpm"
+
+    system "#{bin}/rpm", "-v", "-i", "--dbpath=#{testpath}/var/lib/rpm", "--justdb", "--nodeps",
+                         rpmdir("%_rpmdir")/"noarch/test-1.0-1.noarch.rpm"
+    system "#{bin}/rpm", "-v", "-e", "--dbpath=#{testpath}/var/lib/rpm", "--justdb", "--nodeps",
+                         "test-1.0-1"
   end
 end
