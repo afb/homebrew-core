@@ -14,10 +14,10 @@ end
 class Rpm < Formula
   desc "Standard unix software packaging tool"
   homepage "http://www.rpm5.org/"
-  url "http://rpm5.org/files/rpm/rpm-5.4/rpm-5.4.15-0.20140824.src.rpm",
+  url "http://rpm5.org/files/rpm/rpm-5.4/rpm-5.4.17-0.20160512.src.rpm",
       :using => RpmDownloadStrategy
-  version "5.4.15"
-  sha256 "d4ae5e9ed5df8ab9931b660f491418d20ab5c4d72eb17ed9055b80b71ef6c4ee"
+  version "5.4.17"
+  sha256 "f528c951a5d754dcc054be36b8301bcca5b7efa483dafaee69a320d87e25bfda"
 
   bottle do
     sha256 "718f3e01ea9eac8516a4566403627da074b7cc2b20c40d7797828f5fe93bfae7" => :sierra
@@ -31,10 +31,14 @@ class Rpm < Formula
   depends_on "berkeley-db"
   depends_on "libmagic"
   depends_on "popt"
+  depends_on "libtomcrypt"
   depends_on "libtasn1"
   depends_on "gettext"
   depends_on "xz"
   depends_on "ossp-uuid"
+  depends_on "lua"
+  depends_on "syck"
+  depends_on "openssl"
 
   def install
     # only rpm should go into HOMEBREW_CELLAR, not rpms built
@@ -54,22 +58,28 @@ class Rpm < Formula
       --with-file=external
       --with-popt=external
       --with-beecrypt=internal
+      --with-tomcrypt=external
       --with-libtasn1=external
       --with-neon=internal
+      --with-zlib=external
+      --with-bzip2=external
+      --with-xz=external
       --with-uuid=external
       --with-pcre=internal
-      --with-lua=internal
-      --with-syck=internal
+      --with-lua=external
+      --with-syck=external
+      --with-openssl=external
+      --with-sasl2=external
       --without-apidocs
       varprefix=#{var}
     ]
 
+    # dyld: lazy symbol binding failed: Symbol not found: _SSL_library_init
+    ENV["LIBS"] = "-lssl"
     system "./configure", *args
-    inreplace "Makefile", "--tag=CC", "--tag=CXX"
-    inreplace "Makefile", "--mode=link $(CCLD)", "--mode=link $(CXX)"
+    inreplace "config.h", "/* #undef USE_LTC_LTC_PKCS_1_V1_5 */", "#define USE_LTC_LTC_PKCS_1_V1_5 1"
+    inreplace "rpmdb/Makefile", " -Dapi.pure", ""
     system "make"
-    # enable rpmbuild macros, for building *.rpm packages
-    inreplace "macros/macros", "#%%{load:%{_usrlibrpm}/macros.rpmbuild}", "%{load:%{_usrlibrpm}/macros.rpmbuild}"
     # using __scriptlet_requires needs bash --rpm-requires
     inreplace "macros/macros.rpmbuild", "%_use_internal_dependency_generator\t2", "%_use_internal_dependency_generator\t1"
     system "make", "install"
